@@ -1,0 +1,4 @@
+/wget-log*
+/node_modules
+/yarn-error.log
+/.vscode
