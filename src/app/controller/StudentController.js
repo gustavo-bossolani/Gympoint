@@ -91,12 +91,17 @@ class StudentController {
             req.body.email = newEmail;
         }
 
-        const { id, name, email } = await student.update(req.body);
+        const { id, name, email, age, weight, height } = await student.update(
+            req.body
+        );
 
         return resp.json({
             id,
             name,
             email,
+            age,
+            weight,
+            height,
         });
     }
 }
