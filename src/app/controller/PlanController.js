@@ -36,8 +36,9 @@ class PlanController {
                 .json({ error: 'Já existe um plano com este nome.' });
         }
 
-        await Plan.create(req.body);
+        const { id } = await Plan.create(req.body);
         return resp.json({
+            id,
             title,
             duration,
             price,

@@ -1,8 +1,12 @@
 import * as Yup from 'yup';
-import { addMonths } from 'date-fns';
+import { addMonths, isBefore, parseISO, format } from 'date-fns';
+import pt from 'date-fns/locale/pt';
 
 import Plan from '../models/Plan';
 import Student from '../models/Student';
+import Registration from '../models/Registration';
+
+import Mail from '../../lib/Mail';
 
 class RegistrationController {
     async index(req, resp) {}
@@ -26,29 +30,95 @@ class RegistrationController {
 
         const { student_id, plan_id, start_date } = req.body;
 
-        const student = await Student.findByPk({
-            where: { id: student_id },
-            include: {
-                model: Student,
-                as: 'student',
-                attributes: ['id', 'name', 'email'],
-            },
+        const hourStart = parseISO(start_date);
+
+        // verifica se o Aluno já não tem um matrícula
+        const checkRegistration = await Registration.findOne({
+            where: { student_id },
         });
 
-        const plan = await Plan.findByPk(plan_id);
+        if (checkRegistration) {
+            return resp.status(401).json({
+                error: 'O Aluno indicado já possui uma matrícula ativa.',
+            });
+        }
 
-        if (!student) {
+        // Verificando se a data é passada
+        if (isBefore(hourStart, new Date())) {
+            return resp.status(401).json({
+                error: 'Não é possível iniciar um plano em uma data passada.',
+            });
+        }
+
+        // Buscando Aluno
+        const checkStudent = await Student.findOne({
+            where: { id: student_id },
+            attributes: ['name', 'email'],
+        });
+
+        // Verificando se o Aluno é válido
+        if (!checkStudent) {
             return resp.status(401).json({ error: 'Aluno não encontrado.' });
         }
-        if (plan) {
+
+        // Buscando plano
+        const checkPlan = await Plan.findOne({
+            where: { id: plan_id },
+            attributes: ['title', 'duration', 'price'],
+        });
+
+        // Verificando se o Plano é válido
+        if (!checkPlan) {
             return resp.status(401).json({ error: 'Plano não encontrado.' });
         }
 
-        const { price, duration } = plan;
-        const totalPrice = price * duration;
-        const endDate = addMonths(start_date, duration);
+        const total_price = checkPlan.price * Number(checkPlan.duration);
+        const end_date = addMonths(hourStart, checkPlan.duration);
 
-        const {} = await Registration;
+        const { id: registration_id } = await Registration.create({
+            student_id,
+            plan_id,
+            start_date: hourStart,
+            end_date,
+            price: total_price,
+        });
+
+        await Mail.sendMail({
+            to: `${checkStudent.name} <${checkStudent.email}>`,
+            subject: 'Confirmação de Matrícula.',
+            template: 'confirmation',
+            context: {
+                student_name: checkStudent.name,
+                plan_name: checkPlan.title,
+                total_month: checkPlan.duration,
+                total_price,
+                plan_price: checkPlan.price,
+                start_date: format(hourStart, "'dia' dd 'de' MMMM", {
+                    locale: pt,
+                }),
+                end_date: format(end_date, "'dia' dd 'de' MMMM", {
+                    locale: pt,
+                }),
+            },
+        });
+
+        return resp.json({
+            registration: {
+                id: registration_id,
+                start_date: hourStart,
+                end_date,
+                price: total_price,
+            },
+            plan: {
+                plan_id,
+                title: checkPlan.title,
+            },
+            student: {
+                student_id,
+                name: checkStudent.name,
+                email: checkStudent.email,
+            },
+        });
     }
 
     async update(req, resp) {}
