@@ -1,5 +1,11 @@
 import * as Yup from 'yup';
-import { addMonths, isBefore, parseISO, format } from 'date-fns';
+import {
+    addMonths,
+    isBefore,
+    parseISO,
+    format,
+    differenceInCalendarDays,
+} from 'date-fns';
 import pt from 'date-fns/locale/pt';
 
 import Plan from '../models/Plan';
@@ -16,7 +22,13 @@ class RegistrationController {
             order: ['id'],
             limit: 10,
             offset: (page - 1) * 10,
-            attributes: ['id', 'start_date', 'end_date', ['price', 'total']],
+            attributes: [
+                'id',
+                'start_date',
+                'end_date',
+                'canceled_at',
+                ['price', 'total'],
+            ],
             include: [
                 {
                     model: Student,
@@ -66,7 +78,7 @@ class RegistrationController {
 
         if (checkRegistration) {
             return resp.status(401).json({
-                error: 'O Aluno indicado já possui uma matrícula ativa.',
+                error: 'O Aluno indicado já possui uma matrícula.',
             });
         }
 
@@ -116,14 +128,18 @@ class RegistrationController {
             template: 'confirmation',
             context: {
                 student_name: checkStudent.name,
+                registration_id,
                 plan_name: checkPlan.title,
-                total_month: checkPlan.duration,
+                total_month:
+                    checkPlan.duration > 1
+                        ? `${checkPlan.duration} meses`
+                        : `${checkPlan.duration} mês`,
                 total_price,
                 plan_price: checkPlan.price,
-                start_date: format(hourStart, "'dia' dd 'de' MMMM", {
+                start_date: format(hourStart, "'dia' dd 'de' MMMM 'de' yyyy", {
                     locale: pt,
                 }),
-                end_date: format(end_date, "'dia' dd 'de' MMMM", {
+                end_date: format(end_date, "'dia' dd 'de' MMMM 'de' yyyy", {
                     locale: pt,
                 }),
             },
@@ -150,6 +166,67 @@ class RegistrationController {
 
     async update(req, resp) {}
 
-    async delete(req, resp) {}
+    async delete(req, resp) {
+        const registration = await Registration.findOne({
+            where: { id: req.params.registrationId, canceled_at: null },
+            attributes: [
+                'id',
+                'start_date',
+                'end_date',
+                'canceled_at',
+                ['price', 'total'],
+            ],
+            include: [
+                {
+                    model: Student,
+                    as: 'student',
+                    attributes: ['id', 'name', 'email'],
+                },
+                {
+                    model: Plan,
+                    as: 'plan',
+                    attributes: [
+                        'id',
+                        'title',
+                        'duration',
+                        ['price', 'monthly'],
+                    ],
+                },
+            ],
+        });
+
+        if (!registration) {
+            return resp.status(400).json({
+                error: 'Matrícula está desativa ou não foi encontrada.',
+            });
+        }
+
+        registration.canceled_at = new Date();
+
+        await registration.save();
+
+        /*
+            Verificando a diferençe em dias entre a data de
+            cancelamento e a data de inicio das aulas
+        */
+        const difInDays = differenceInCalendarDays(
+            registration.canceled_at,
+            registration.start_date
+        );
+        const days = difInDays < 0 ? 0 : difInDays;
+
+        await Mail.sendMail({
+            to: `${registration.student.name} <${registration.student.email}>`,
+            subject: 'Cancelamento de Matrícula.',
+            template: 'cancellation',
+            context: {
+                student_name: registration.student.name,
+                registration_id: registration.id,
+                days: days > 1 || days === 0 ? `${days} dias` : `${days} dia`,
+            },
+        });
+
+        return resp.json(registration);
+    }
 }
 export default new RegistrationController();

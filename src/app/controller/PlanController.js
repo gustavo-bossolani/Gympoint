@@ -54,7 +54,7 @@ class PlanController {
             duration: Yup.number('Formato de duração de plano é inválido.')
                 .positive('Duração do plano deve ter valor positivo.')
                 .integer('Formato de duração de plano é inválido.')
-                .moreThan(1, 'Duração deve ser maior que 1 mês.'),
+                .moreThan(0, 'Duração deve ser maior que 1 mês.'),
             price: Yup.number('Formato de preço do plano é inválido.')
                 .positive('O preço do plano dever ser um valor positivo.')
                 .moreThan(-1),

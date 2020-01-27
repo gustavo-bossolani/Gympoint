@@ -11,15 +11,11 @@ module.exports = {
                 type: Sequelize.INTEGER,
                 allowNull: false,
                 references: { model: 'students', key: 'id' },
-                onUpdate: 'CASCADE',
-                onDelete: 'CASCADE',
             },
             plan_id: {
                 type: Sequelize.INTEGER,
                 allowNull: false,
                 references: { model: 'plans', key: 'id' },
-                onUpdate: 'CASCADE',
-                onDelete: 'CASCADE',
             },
             start_date: {
                 type: Sequelize.DATE,
@@ -32,6 +28,9 @@ module.exports = {
             price: {
                 type: Sequelize.DOUBLE,
                 allowNull: false,
+            },
+            canceled_at: {
+                type: Sequelize.DATE,
             },
             created_at: {
                 type: Sequelize.DATE,

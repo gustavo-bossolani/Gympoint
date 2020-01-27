@@ -1,10 +1,11 @@
-<h2>Olá {{ student_name }}!</h2>
-<h3>
+<h1>Olá {{ student_name }}!</h1>
+<h2>
     Sua Matrícula foi confirmada e cadastrada com sucesso, segue os detalhes abaixo:
-</h3>
+</h2>
 <strong>
-    Plano selecionado <span id="plan_name">{{ plan_name }}</span> ({{ total_month }} meses), preço total de
-    R$ <p id="total_price">{{ total_price }}</p> (R$ {{ plan_price }} /mês). <br />
+    Numero da Matrícula: <span id="registration_id">{{ registration_id }}</span>. <br />
+    Plano selecionado: <span id="plan_name">{{ plan_name }}</span> ({{ total_month }}). <br />
+    Preço total: R$ <span id="total_price">{{ total_price }}</span> (R$ {{ plan_price }} /mês). <br />
     A data de inicio escolhida é <u>{{  start_date }}</u> com encerramento no <u>{{ end_date }}</u>.
 </strong>
 <br />
@@ -22,10 +23,10 @@
 </small>
 
 <style>
-    #plan_name, #total_price, u {
+    #plan_name, #total_price, #registration_id, u {
         color: #ff6f00;
     }
-    h2 {
+    h1 {
         color: #ff8f00;
     }
 </style>
