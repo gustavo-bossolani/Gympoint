@@ -1,4 +1,4 @@
 export default {
-    secret: '52a18cb58a5e0cb7a8c1c08674a84794',
+    secret: 'f0ad617e4788248037b90d0da721c272',
     expiresIn: '7d',
 };

@@ -9,7 +9,34 @@ import Registration from '../models/Registration';
 import Mail from '../../lib/Mail';
 
 class RegistrationController {
-    async index(req, resp) {}
+    async index(req, resp) {
+        const { page = 1 } = req.query;
+
+        const registrations = await Registration.findAll({
+            order: ['id'],
+            limit: 10,
+            offset: (page - 1) * 10,
+            attributes: ['id', 'start_date', 'end_date', ['price', 'total']],
+            include: [
+                {
+                    model: Student,
+                    as: 'student',
+                    attributes: ['id', 'name', 'email'],
+                },
+                {
+                    model: Plan,
+                    as: 'plan',
+                    attributes: [
+                        'id',
+                        'title',
+                        'duration',
+                        ['price', 'monthly'],
+                    ],
+                },
+            ],
+        });
+        return resp.json(registrations);
+    }
 
     async store(req, resp) {
         const schema = Yup.object().shape({

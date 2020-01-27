@@ -3,9 +3,9 @@
     Sua Matrícula foi confirmada e cadastrada com sucesso, segue os detalhes abaixo:
 </h3>
 <strong>
-    Plano selecionado {{ plan_name }} ({{ total_month }} meses), preço total de
-    R${{ total_price }} (R${{ plan_price }} /mês). <br />
-    A data de inicio escolhida é {{  start_date }} com encerramento no {{ end_date }}.
+    Plano selecionado <span id="plan_name">{{ plan_name }}</span> ({{ total_month }} meses), preço total de
+    R$ <p id="total_price">{{ total_price }}</p> (R$ {{ plan_price }} /mês). <br />
+    A data de inicio escolhida é <u>{{  start_date }}</u> com encerramento no <u>{{ end_date }}</u>.
 </strong>
 <br />
 <p>
@@ -18,5 +18,14 @@
 </p>
 <hr>
 <small>
-    Por favor não responda este email.
+    <b>Por favor não responda este email.</b>
 </small>
+
+<style>
+    #plan_name, #total_price, u {
+        color: #ff6f00;
+    }
+    h2 {
+        color: #ff8f00;
+    }
+</style>
