@@ -89,6 +89,14 @@ class RegistrationController {
             });
         }
 
+        // Verificando se a data está dentro de um período de 45 dias
+        if (differenceInCalendarDays(hourStart, new Date()) > 45) {
+            return resp.status(401).json({
+                error:
+                    'A data de inicio deve estar dentro de 45 dias da data de matrícula.',
+            });
+        }
+
         // Buscando Aluno
         const checkStudent = await Student.findOne({
             where: { id: student_id },
@@ -164,7 +172,9 @@ class RegistrationController {
         });
     }
 
-    async update(req, resp) {}
+    async update(req, resp) {
+        return resp.json({ ok: true });
+    }
 
     async delete(req, resp) {
         const registration = await Registration.findOne({
@@ -206,7 +216,7 @@ class RegistrationController {
         await registration.save();
 
         /*
-            Verificando a diferençe em dias entre a data de
+            Verificando a diferença em dias entre a data de
             cancelamento e a data de inicio das aulas
         */
         const difInDays = differenceInCalendarDays(
