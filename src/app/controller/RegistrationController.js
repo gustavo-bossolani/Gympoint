@@ -55,12 +55,12 @@ class RegistrationController {
             student_id: Yup.number('Formato de id do Aluno está incorreto.')
                 .integer('Formato de id do Aluno está incorreto.')
                 .positive('Id do Aluno deve ser positivo.')
-                .required('Id do Plano é obrigatório'),
+                .required('Id do Aluno é obrigatório'),
             plan_id: Yup.number('Formato de id do Plano está incorreto.')
                 .integer('Formato de id do Plano incorreto.')
                 .positive('Id do Plano deve ser positivo.')
                 .required('Id do Plano é obrigatório'),
-            start_date: Yup.date().required('Id do Plano é obrigatório'),
+            start_date: Yup.date().required('Data de inicio é obrigatório.'),
         });
 
         if (!(await schema.isValid(req.body))) {
@@ -173,7 +173,154 @@ class RegistrationController {
     }
 
     async update(req, resp) {
-        return resp.json({ ok: true });
+        const schema = Yup.object().shape({
+            plan_id: Yup.number(
+                'Formato de identificação no plano está inválido.'
+            )
+                .positive('Valor de identificação do plano deve ser positivo.')
+                .integer('Formato de identificação no plano está inválido.'),
+            start_date: Yup.date(
+                'A data de inicio deve ter o formato de date.'
+            ).required('Campo de data de inicio é obrigatório.'),
+        });
+
+        if (!(await schema.isValid(req.body))) {
+            return resp.status(400).json({ error: 'Erro de validação.' });
+        }
+
+        const { registrationId: reg_id } = req.params;
+
+        const registration = await Registration.findOne({
+            where: { id: reg_id },
+            include: [
+                {
+                    model: Student,
+                    as: 'student',
+                    attributes: ['id', 'name', 'email'],
+                },
+                {
+                    model: Plan,
+                    as: 'plan',
+                    attributes: [
+                        'id',
+                        'title',
+                        'duration',
+                        'loyalty_tax',
+                        ['price', 'monthly'],
+                    ],
+                },
+            ],
+        });
+
+        if (!registration) {
+            return resp.status(400).json({
+                error: 'Matrícula não encontrada.',
+            });
+        }
+
+        const { plan_id: newPlanId, start_date } = req.body;
+        const newStartDay = parseISO(start_date);
+
+        // Verificando se o novo plano é o mesmo
+        if (registration.plan_id === newPlanId) {
+            return resp.status(401).json({
+                error: 'Não é possível alterar o plano para o mesmo.',
+            });
+        }
+
+        // Verificando se a data é passada
+        if (isBefore(newStartDay, new Date())) {
+            return resp.status(401).json({
+                error: 'Não é possível iniciar um plano em uma data passada.',
+            });
+        }
+
+        // Verificando se a data está dentro de um período de 45 dias
+        if (differenceInCalendarDays(newStartDay, new Date()) > 45) {
+            return resp.status(401).json({
+                error:
+                    'A data de inicio deve estar dentro de 45 dias a partir da data de hoje.',
+            });
+        }
+
+        if (!newPlanId) {
+            // Mudando apenas a data de inicio caso um novo plano não for especificado
+            const { start_date: currentStartDate } = registration;
+            // Verificando se a data de agora é antes da data de inicio atual
+            // Se sim, o Aluno ainda não teve seu plano iniciado
+            // Se não, o Aluno já teve seu plano iniciado e não poderá mudar a data
+            if (isBefore(new Date(), currentStartDate)) {
+                const currentPlanDuration = registration.plan.duration;
+                const newEndDate = addMonths(newStartDay, currentPlanDuration);
+                registration.start_date = newStartDay;
+                registration.end_date = newEndDate;
+            } else {
+                return resp.status(401).json({
+                    error:
+                        'Não é possível alterar a data de inicio após de seu plano já ter iniciado.',
+                });
+            }
+        } else {
+            // Mudando a data de inicio, fim e preço da matricula, pois o plano foi especificado
+            const checkPlan = await Plan.findByPk(newPlanId);
+            if (!checkPlan) {
+                return resp.status(400).json({
+                    error: 'Plano não encontrado.',
+                });
+            }
+            const {
+                price: newPlanPrice,
+                duration: newPlanDuration,
+            } = checkPlan;
+
+            const newTotalPrice = newPlanPrice * Number(newPlanDuration);
+            const newEndDate = addMonths(newStartDay, newPlanDuration);
+
+            registration.plan_id = newPlanId;
+            registration.price = newTotalPrice;
+            registration.start_date = newStartDay;
+            registration.end_date = newEndDate;
+        }
+
+        // Reativando a matrícula em casos de matrículas trancadas
+        if (registration.canceled_at) {
+            registration.canceled_at = null;
+        }
+
+        const {
+            id,
+            start_date: new_start_date,
+            end_date: new_end_date,
+            price: total,
+            canceled_at,
+        } = await registration.save();
+
+        const { id: student_id, name, email } = registration.student;
+        const {
+            id: plan_id,
+            title,
+            duration,
+            price: monthly,
+        } = registration.plan;
+
+        return resp.json({
+            id,
+            new_start_date,
+            new_end_date,
+            total,
+            canceled_at,
+            student: {
+                id: student_id,
+                name,
+                email,
+            },
+            plan: {
+                id: plan_id,
+                title,
+                duration,
+                monthly,
+            },
+        });
     }
 
     async delete(req, resp) {

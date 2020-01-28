@@ -1,3 +1,8 @@
+
+{{#each css}}
+        <link rel="stylesheet" href="/css/{{this}}">
+{{/each}}
+
 <h1>Olá {{ student_name }}!</h1>
 <h2>
     Sua Matrícula foi trancada!
@@ -25,7 +30,7 @@
     <b>Por favor não responda este email.</b>
 </small>
 
-<style>
+{{!-- <style>
     #registration_id, #days {
         color: #ff6f00;
     }
@@ -40,4 +45,4 @@
         font-style: italic;
         margin-left: 15px;
     }
-</style>
+</style> --}}

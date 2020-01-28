@@ -17,14 +17,19 @@ class PlanController {
                 .positive()
                 .integer()
                 .required(),
-            price: Yup.number().positive(),
+            price: Yup.number()
+                .positive()
+                .required(),
+            loyalty_tax: Yup.number()
+                .positive()
+                .required(),
         });
 
         if (!(await schema.isValid(req.body))) {
             return resp.status(400).json({ error: 'Erro de validação.' });
         }
 
-        const { title, duration, price } = req.body;
+        const { title, duration, price, loyalty_tax } = req.body;
 
         const planExists = await Plan.findOne({
             where: { title },
@@ -42,6 +47,7 @@ class PlanController {
             title,
             duration,
             price,
+            loyalty_tax,
         });
     }
 
