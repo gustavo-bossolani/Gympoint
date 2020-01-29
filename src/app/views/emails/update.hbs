@@ -1,24 +1,35 @@
 <h1>Olá {{ student_name }}!</h1>
 <h2>
-    Sua Matrícula foi Atualizada!
+    Sua Matrícula foi Atualizada! <br />
     <span>Segue os detalhes abaixo:</span>
 </h2>
 <strong>
-    Numero da Matrícula: <span id="registration_id">{{ registration_id }}</span>. <br />
-    Sua matrícula foi cancelada depois de <span id="days">{{ days }}</span> de atividade. <br />
-    <blockquote>
-        <p>
-            Lembrando que os valores serão cobrados de acordo com o número de dias ativos,
-            vale ressaltar que caso a matrícula não for cancelada dentro do período experimental de <mark>15</mark> dias
-            a mensalidade será cobrada normalmente referênte ao mês, caso a mesma tenha o cancelamento
-            confirmado dentro do periodo de <mark>15</mark> dias não será cobrado o valor integral da matrícula,
-            mas sim a taxa de <mark>adesão</mark>.
-        </p>
-    </blockquote>
+    Numero da Matrícula: <span id="special_valor">{{ registration_id }}</span>. <br />
+    Situação da Matrícula: <span id="special_valor">Aberta</span>. <br />
 </strong>
+
+<br />
+
+<h3>Plano:</h3>
+<blockquote>
+    <strong>
+        <i>Nome:</i> <span id="special_valor">{{ plan_name }}.</span> <br>
+        <i>Duração:</i> <span id="special_valor">{{ plan_duration }}.</span> <br>
+        <i>Preço total:</i> <span id="special_valor">{{ plan_total_price }}.</span> <br>
+        <i>Mensalidade:</i> <span id="special_valor">{{plan_monthly }}.</span> <br>
+        {{#if hasTax}}
+        <i>Taxa de adesão:</i> <span id="special_valor">{{ plan_loyalty }}.</span> <br>
+        {{/if}}
+    </strong>
+</blockquote>
+<br>
+<strong>
+    A data de inicio escolhida é <u>{{  start_date }}</u> com encerramento no <u>{{ end_date }}</u>.
+</strong>
+
 <br />
 <p>
-     <b>Caso tenha algum problema ou alguma irregularidade com as informações deste email, por favor desconsidere.</b>
+    <b>Caso tenha algum problema ou alguma irregularidade com as informações deste email, por favor desconsidere.</b>
 </p>
 <hr>
 <small>
@@ -26,18 +37,20 @@
 </small>
 
 <style>
-    #registration_id, #days {
+    #special_valor, u {
         color: #ff6f00;
     }
+
     h1 {
         color: #ff8f00;
         margin: 0;
     }
-    blockquote{
+
+    blockquote {
         border-left: 5px solid #ff8f00;
     }
-    blockquote > p{
-        font-style: italic;
+
+    blockquote > strong > i{
         margin-left: 15px;
     }
 </style>

@@ -195,13 +195,6 @@ class RegistrationController {
 
         const registration = await Registration.findOne({
             where: { id: reg_id },
-            attributes: [
-                'id',
-                'start_date',
-                'end_date',
-                ['price', 'total'],
-                'canceled_at',
-            ],
             include: [
                 {
                     model: Student,
@@ -215,7 +208,7 @@ class RegistrationController {
                         'id',
                         'title',
                         'duration',
-                        ['price', 'monthly'],
+                        'price',
                         'loyalty_tax',
                     ],
                 },
@@ -232,7 +225,7 @@ class RegistrationController {
         const newStartDay = parseISO(start_date);
 
         // Verificando se o novo plano é o mesmo
-        if (registration.plan_id === newPlanId && newPlanId) {
+        if (registration.plan.id === newPlanId && newPlanId) {
             return resp.status(401).json({
                 error: 'Não é possível alterar o plano para o mesmo.',
             });
@@ -243,7 +236,7 @@ class RegistrationController {
             isSameDay(newStartDay, registration.start_date) &&
             isSameMonth(newStartDay, registration.start_date) &&
             isSameYear(newStartDay, registration.start_date);
-        if (isSameDate) {
+        if (isSameDate && !registration.canceled_at) {
             return resp.status(401).json({
                 error: 'Não é possível alterar a data para a mesma.',
             });
@@ -267,10 +260,13 @@ class RegistrationController {
         if (!newPlanId) {
             // Mudando apenas a data de inicio caso um novo plano não for especificado
             const { start_date: currentStartDate } = registration;
+
+            const isAvailabeChangeDate = isBefore(new Date(), currentStartDate);
+            const isCanceled = registration.canceled_at;
             // Verificando se a data de agora é antes da data de inicio atual
             // Se sim, o Aluno ainda não teve seu plano iniciado
             // Se não, o Aluno já teve seu plano iniciado e não poderá mudar a data
-            if (isBefore(new Date(), currentStartDate)) {
+            if (isAvailabeChangeDate || isCanceled) {
                 const currentPlanDuration = registration.plan.duration;
                 const newEndDate = addMonths(newStartDay, currentPlanDuration);
                 registration.start_date = newStartDay;
@@ -309,9 +305,79 @@ class RegistrationController {
             registration.canceled_at = null;
         }
 
-        await registration.save();
+        // recuperando os dados da Matrícula
+        const {
+            id: registrationId,
+            start_date: updatedStartDate,
+            end_date: updatedEndDate,
+            price: total,
+            canceled_at,
+        } = await registration.save();
 
-        return resp.json(registration);
+        // recuperando os dados do Aluno
+        const { id: studentId, name, email } = registration.student;
+
+        // recuperando os dados do Plano
+        const {
+            id: planId,
+            title,
+            duration,
+            price: monthly,
+            loyalty_tax: tax,
+        } = registration.plan;
+
+        await Mail.sendMail({
+            to: `${registration.student.name} <${registration.student.email}>`,
+            subject: 'Atualização de Matrícula.',
+            template: 'update',
+            context: {
+                student_name: name,
+                registration_id: registrationId,
+                plan_name: title,
+                plan_duration:
+                    duration > 1 ? `${duration} meses` : `${duration} mês`,
+                plan_total_price: total,
+                plan_monthly: monthly,
+                hasTax: !!tax,
+                plan_loyalty: tax,
+                start_date: format(
+                    updatedStartDate,
+                    "'dia' dd 'de' MMMM 'de' yyyy",
+                    {
+                        locale: pt,
+                    }
+                ),
+                end_date: format(
+                    updatedEndDate,
+                    "'dia' dd 'de' MMMM 'de' yyyy",
+                    {
+                        locale: pt,
+                    }
+                ),
+            },
+        });
+
+        return resp.json({
+            registration: {
+                id: registrationId,
+                start_date: updatedStartDate,
+                end_date: updatedEndDate,
+                total,
+                canceled_at,
+            },
+            student: {
+                id: studentId,
+                name,
+                email,
+            },
+            plan: {
+                id: planId,
+                title,
+                duration,
+                monthly,
+                tax,
+            },
+        });
     }
 
     async delete(req, resp) {
