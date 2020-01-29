@@ -5,6 +5,9 @@ import {
     parseISO,
     format,
     differenceInCalendarDays,
+    isSameDay,
+    isSameMonth,
+    isSameYear,
 } from 'date-fns';
 import pt from 'date-fns/locale/pt';
 
@@ -192,6 +195,13 @@ class RegistrationController {
 
         const registration = await Registration.findOne({
             where: { id: reg_id },
+            attributes: [
+                'id',
+                'start_date',
+                'end_date',
+                ['price', 'total'],
+                'canceled_at',
+            ],
             include: [
                 {
                     model: Student,
@@ -205,8 +215,8 @@ class RegistrationController {
                         'id',
                         'title',
                         'duration',
-                        'loyalty_tax',
                         ['price', 'monthly'],
+                        'loyalty_tax',
                     ],
                 },
             ],
@@ -222,9 +232,20 @@ class RegistrationController {
         const newStartDay = parseISO(start_date);
 
         // Verificando se o novo plano é o mesmo
-        if (registration.plan_id === newPlanId) {
+        if (registration.plan_id === newPlanId && newPlanId) {
             return resp.status(401).json({
                 error: 'Não é possível alterar o plano para o mesmo.',
+            });
+        }
+
+        // Verificando se a data de inicio é a mesma
+        const isSameDate =
+            isSameDay(newStartDay, registration.start_date) &&
+            isSameMonth(newStartDay, registration.start_date) &&
+            isSameYear(newStartDay, registration.start_date);
+        if (isSameDate) {
+            return resp.status(401).json({
+                error: 'Não é possível alterar a data para a mesma.',
             });
         }
 
@@ -276,6 +297,7 @@ class RegistrationController {
             const newTotalPrice = newPlanPrice * Number(newPlanDuration);
             const newEndDate = addMonths(newStartDay, newPlanDuration);
 
+            registration.plan = checkPlan;
             registration.plan_id = newPlanId;
             registration.price = newTotalPrice;
             registration.start_date = newStartDay;
@@ -287,40 +309,9 @@ class RegistrationController {
             registration.canceled_at = null;
         }
 
-        const {
-            id,
-            start_date: new_start_date,
-            end_date: new_end_date,
-            price: total,
-            canceled_at,
-        } = await registration.save();
+        await registration.save();
 
-        const { id: student_id, name, email } = registration.student;
-        const {
-            id: plan_id,
-            title,
-            duration,
-            price: monthly,
-        } = registration.plan;
-
-        return resp.json({
-            id,
-            new_start_date,
-            new_end_date,
-            total,
-            canceled_at,
-            student: {
-                id: student_id,
-                name,
-                email,
-            },
-            plan: {
-                id: plan_id,
-                title,
-                duration,
-                monthly,
-            },
-        });
+        return resp.json(registration);
     }
 
     async delete(req, resp) {
