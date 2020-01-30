@@ -14,9 +14,9 @@ class App {
 
     middlewares() {
         this.server.use(express.json());
-        this.server.use(express.static(path.resolve(__dirname, 'public')));
+        this.server.use(express.static(path.join(__dirname, '..', 'public')));
 
-        // console.log(path.join(__dirname, '../', 'public'));
+        console.log(path.join(__dirname, '../', 'public'));
         // console.log(path.resolve(__dirname, 'public'));
     }
 
