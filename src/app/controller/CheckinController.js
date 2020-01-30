@@ -1,7 +1,7 @@
 import * as Yup from 'yup';
 import pt from 'date-fns/locale/pt';
 
-import { parseISO, format } from 'date-fns';
+import { format, differenceInCalendarDays } from 'date-fns';
 
 import Checkin from '../schemas/Checkin';
 import Student from '../models/Student';
@@ -31,8 +31,31 @@ class CheckinController {
             });
         }
 
+        // Validando se o aluno está habilitado para realizar o checkin
         const checkinDate = new Date();
+        const checkins = await Checkin.find({
+            student: student_id,
+        }).sort({ createdAt: 'desc' });
 
+        const numberOfCheckins = checkins.filter(checkin => {
+            const pastCheckinDate = checkin.createdAt;
+            console.log(differenceInCalendarDays(checkinDate, pastCheckinDate));
+
+            if (differenceInCalendarDays(checkinDate, pastCheckinDate) < 7) {
+                return checkin;
+            }
+        });
+
+        console.log(numberOfCheckins.length);
+
+        // Verificando se a quantidade de Checkins ultrapassa de 5
+        if (numberOfCheckins.length >= 5) {
+            return resp.status(401).json({
+                error: 'Não é possível realizar mais de 5 Checkins em 7 dias.',
+            });
+        }
+
+        // Realizando o Checkin do Aluno
         const checkin = await Checkin.create({
             student: student_id,
             message: format(
@@ -70,7 +93,12 @@ class CheckinController {
 
         const notifications = await Checkin.find({
             student: student_id,
-        }).sort({ createdAt: 'asc' });
+        })
+            .sort({ createdAt: 'desc' })
+            .select('id')
+            .select('student')
+            .select('message')
+            .select('createdAt');
 
         return resp.json(notifications);
     }
