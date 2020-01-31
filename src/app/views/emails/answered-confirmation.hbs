@@ -1,0 +1,59 @@
+<h1>Olá {{ student_name }}!</h1>
+<h2>
+    Sua foi pergunta foi Respondida! <br />
+    <span>Segue os detalhes abaixo:</span>
+</h2>
+
+<br />
+
+{{!-- <h3>Pergunta:</h3>
+<blockquote>
+    <strong>
+        <i>Nome:</i> <span id="special_valor">{{ plan_name }}.</span> <br>
+        <i>Duração:</i> <span id="special_valor">{{ plan_duration }}.</span> <br>
+    </strong>
+</blockquote>
+
+<br />
+
+<h3>Respondida por {{ adm_name }}:</h3>
+<blockquote>
+    <strong>
+        <i>Nome:</i> <span id="special_valor">{{ plan_name }}.</span> <br>
+        <i>Duração:</i> <span id="special_valor">{{ plan_duration }}.</span> <br>
+        <i>Preço total:</i> <span id="special_valor">{{ plan_total_price }}.</span> <br>
+    </strong>
+</blockquote> --}}
+<br />
+<p>
+    <b>Caso tenha algum problema ou alguma irregularidade com as informações deste email, por favor desconsidere.</b>
+</p>
+<hr>
+<small>
+    <b>Por favor não responda este email.</b>
+</small>
+
+<style>
+    #special_valor,
+    u {
+        color: #ff6f00;
+    }
+
+    h1 {
+        color: #ff8f00;
+        margin: 0;
+    }
+
+    blockquote {
+        border-left: 5px solid #ff8f00;
+    }
+
+    blockquote>strong>i {
+        margin-left: 15px;
+    }
+
+    hr {
+        width: 65%;
+        text-align: center;
+    }
+</style>

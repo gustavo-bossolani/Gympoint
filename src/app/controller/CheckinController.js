@@ -94,10 +94,8 @@ class CheckinController {
         })
             .sort({ createdAt: 'desc' })
             .limit(20)
-            .select('id')
-            .select('student')
-            .select('message')
-            .select('createdAt');
+            .select('-__v')
+            .select('-updatedAt');
 
         return resp.json(notifications);
     }
