@@ -35,18 +35,16 @@ class CheckinController {
         const checkinDate = new Date();
         const checkins = await Checkin.find({
             student: student_id,
-        }).sort({ createdAt: 'desc' });
+        })
+            .sort({ createdAt: 'desc' })
+            .limit(20);
 
         const numberOfCheckins = checkins.filter(checkin => {
             const pastCheckinDate = checkin.createdAt;
-            console.log(differenceInCalendarDays(checkinDate, pastCheckinDate));
-
             if (differenceInCalendarDays(checkinDate, pastCheckinDate) < 7) {
                 return checkin;
             }
         });
-
-        console.log(numberOfCheckins.length);
 
         // Verificando se a quantidade de Checkins ultrapassa de 5
         if (numberOfCheckins.length >= 5) {
@@ -95,6 +93,7 @@ class CheckinController {
             student: student_id,
         })
             .sort({ createdAt: 'desc' })
+            .limit(20)
             .select('id')
             .select('student')
             .select('message')
