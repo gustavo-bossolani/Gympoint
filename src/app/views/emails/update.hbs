@@ -15,10 +15,10 @@
     <strong>
         <i>Nome:</i> <span id="special_valor">{{ plan_name }}.</span> <br>
         <i>Duração:</i> <span id="special_valor">{{ plan_duration }}.</span> <br>
-        <i>Preço total:</i> <span id="special_valor">{{ plan_total_price }}.</span> <br>
-        <i>Mensalidade:</i> <span id="special_valor">{{plan_monthly }}.</span> <br>
+        <i>Preço total:</i> R$ <span id="special_valor">{{ plan_total_price }}.</span> <br>
+        <i>Mensalidade:</i>  R$ <span id="special_valor">{{plan_monthly }}/mês.</span><br>
         {{#if hasTax}}
-        <i>Taxa de adesão:</i> <span id="special_valor">{{ plan_loyalty }}.</span> <br>
+        <i>Taxa de adesão:</i> R$ <span id="special_valor">{{ plan_loyalty }}.</span> <br>
         {{/if}}
     </strong>
 </blockquote>
@@ -48,9 +48,6 @@
 
     blockquote {
         border-left: 5px solid #ff8f00;
-    }
-
-    blockquote > strong > i{
-        margin-left: 15px;
+        padding-left: 15px;
     }
 </style>

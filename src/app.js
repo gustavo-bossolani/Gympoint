@@ -16,7 +16,7 @@ class App {
         this.server.use(express.json());
         this.server.use(express.static(path.join(__dirname, '..', 'public')));
 
-        console.log(path.join(__dirname, '../', 'public'));
+        console.log(path.join(__dirname, '..', 'public'));
         // console.log(path.resolve(__dirname, 'public'));
     }
 

@@ -163,14 +163,14 @@ class RegistrationController {
                 end_date,
                 price: total_price,
             },
-            plan: {
-                plan_id,
-                title: checkPlan.title,
-            },
             student: {
                 student_id,
                 name: checkStudent.name,
                 email: checkStudent.email,
+            },
+            plan: {
+                plan_id,
+                title: checkPlan.title,
             },
         });
     }

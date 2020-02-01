@@ -4,6 +4,7 @@ import pt from 'date-fns/locale/pt';
 
 import HelpOrder from '../models/HelpOrder';
 import Student from '../models/Student';
+import User from '../models/User';
 
 import Mail from '../../lib/Mail';
 
@@ -15,6 +16,10 @@ class AnswerOrderController {
                 .min(
                     1,
                     'Numero minimo de caracteres não respeitado, (minimo 20).'
+                )
+                .max(
+                    250,
+                    'Numero máximo de caracteres não respeitado, (máximo 250).'
                 ),
         });
         const paramsSchema = Yup.object().shape({
@@ -61,14 +66,22 @@ class AnswerOrderController {
             answer_at,
         } = await order.save();
 
-        const { student_name, student_email } = order.student;
+        const { name: student_name, email: student_email } = order.student;
+
+        const { name } = await User.findByPk(req.userId);
 
         await Mail.sendMail({
             to: `${student_name} <${student_email}>`,
-            subject: 'Sua pergunta foi Respondida!.',
+            subject: 'Sua pergunta foi Respondida!',
             template: 'answered-confirmation',
             context: {
                 student_name,
+                question,
+                answer,
+                answer_at: format(answer_at, "H:mm 'do dia' dd 'de' MMMM ", {
+                    locale: pt,
+                }),
+                adm_name: name,
             },
         });
 
